@@ -11,7 +11,7 @@ with app.app_context():
 
     if Cliente.query.count() == 0:
         clientes = [
-            Cliente(nombre="Juan Pérez", telefono="50766599331", email="juan@example.com"),
+            Cliente(nombre="Juan Pérez", telefono="50761234567", email="juan@example.com"),
             Cliente(nombre="María Gómez", telefono="50769876543", email="maria@example.com"),
         ]
         db.session.add_all(clientes)

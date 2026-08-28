@@ -25,7 +25,20 @@ INSTANCE_DIR = os.path.join(BASE_DIR, "instance")
 os.makedirs(INSTANCE_DIR, exist_ok=True)
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.join(INSTANCE_DIR, 'facturacion.db')}"
+
+# En producción (Render, Railway, etc.) el hosting inyecta la variable de
+# entorno DATABASE_URL apuntando a PostgreSQL. Si no existe (desarrollo
+# local), se usa SQLite como respaldo automático.
+database_url = os.environ.get("DATABASE_URL")
+if database_url:
+    # Render/Heroku entregan la URL con el prefijo antiguo "postgres://",
+    # pero SQLAlchemy 1.4+ exige "postgresql://". Se corrige aquí.
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+else:
+    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.join(INSTANCE_DIR, 'facturacion.db')}"
+
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "cambia-esta-clave-en-produccion")
 
@@ -300,8 +313,13 @@ def ver_reportes():
     )
 
 
+# Crea las tablas si no existen. Se ejecuta siempre al importar este módulo
+# (no solo con `python app.py`), para que funcione también bajo gunicorn en
+# producción, donde este bloque "if __name__" nunca se ejecuta.
+with app.app_context():
+    db.create_all()
+
+
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
     app.run(debug=True)
