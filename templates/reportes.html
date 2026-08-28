@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Reportes{% endblock %}
+{% block content %}
+    <h1>Reportes de ventas</h1>
+
+    <div class="card">
+        <h2>Resumen general</h2>
+        <p><b>Total vendido (histórico):</b> ${{ "%.2f"|format(resumen.total_vendido) }}</p>
+        <p><b>Número de facturas:</b> {{ resumen.num_facturas }}</p>
+        <p><b>Total en fiado (pendiente de cobrar):</b>
+            <span class="saldo-negativo">${{ "%.2f"|format(resumen.total_fiado) }}</span>
+        </p>
+    </div>
+
+    <div class="card">
+        <h2>Ventas por día</h2>
+        {% if ventas_dia %}
+        <table>
+            <tr><th>Fecha</th><th>Total vendido</th></tr>
+            {% for v in ventas_dia %}
+            <tr><td>{{ v.fecha }}</td><td>${{ "%.2f"|format(v.total) }}</td></tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <p>Aún no hay ventas registradas.</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>Platos más vendidos</h2>
+        {% if platos %}
+        <table>
+            <tr><th>Plato</th><th>Cantidad vendida</th><th>Total generado</th></tr>
+            {% for p in platos %}
+            <tr><td>{{ p.nombre }}</td><td>{{ p.cantidad }}</td><td>${{ "%.2f"|format(p.total) }}</td></tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <p>Aún no hay ventas registradas.</p>
+        {% endif %}
+    </div>
+{% endblock %}

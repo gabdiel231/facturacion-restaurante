@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}{{ cliente.nombre }}{% endblock %}
+{% block content %}
+    <h1>{{ cliente.nombre }}</h1>
+    <div class="card">
+        <p><b>Teléfono:</b> {{ cliente.telefono or '-' }}</p>
+        <p><b>Email:</b> {{ cliente.email or '-' }}</p>
+        <p><b>Dirección:</b> {{ cliente.direccion or '-' }}</p>
+        <p><b>Cliente desde:</b> {{ cliente.fecha_registro.strftime('%d/%m/%Y') }}</p>
+        <p><b>Saldo pendiente:</b>
+            {% if cliente.saldo_pendiente > 0 %}
+                <span class="saldo-negativo">${{ "%.2f"|format(cliente.saldo_pendiente) }}</span>
+            {% else %}
+                $0.00
+            {% endif %}
+        </p>
+    </div>
+
+    <h2>Historial de facturas</h2>
+    <table>
+        <tr><th>#</th><th>Fecha</th><th>Total</th><th>Estado</th><th></th></tr>
+        {% for f in cliente.facturas|sort(attribute='fecha', reverse=true) %}
+        <tr>
+            <td>{{ f.id }}</td>
+            <td>{{ f.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
+            <td>${{ "%.2f"|format(f.total) }}</td>
+            <td><span class="badge badge-{{ f.estado }}">{{ f.estado }}</span></td>
+            <td><a href="{{ url_for('ver_factura', factura_id=f.id) }}">Ver</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5">Este cliente aún no tiene facturas.</td></tr>
+        {% endfor %}
+    </table>
+{% endblock %}

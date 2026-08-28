@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Clientes{% endblock %}
+{% block content %}
+    <h1>Clientes</h1>
+    <a class="btn" href="{{ url_for('nuevo_cliente') }}">+ Nuevo cliente</a>
+    <br><br>
+    <table>
+        <tr><th>Nombre</th><th>Teléfono</th><th>Email</th><th>Saldo pendiente</th><th></th></tr>
+        {% for c in clientes %}
+        <tr>
+            <td>{{ c.nombre }}</td>
+            <td>{{ c.telefono or '-' }}</td>
+            <td>{{ c.email or '-' }}</td>
+            <td>
+                {% if c.saldo_pendiente > 0 %}
+                    <span class="saldo-negativo">${{ "%.2f"|format(c.saldo_pendiente) }}</span>
+                {% else %}
+                    $0.00
+                {% endif %}
+            </td>
+            <td><a href="{{ url_for('ver_cliente', cliente_id=c.id) }}">Ver</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5">No hay clientes registrados.</td></tr>
+        {% endfor %}
+    </table>
+{% endblock %}

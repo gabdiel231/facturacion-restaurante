@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Nueva venta{% endblock %}
+{% block content %}
+    <h1>Nueva venta / factura</h1>
+    <div class="card">
+        <form method="post" id="form-factura">
+            <label>Cliente *</label>
+            <select name="cliente_id" required>
+                <option value="">-- Selecciona un cliente --</option>
+                {% for c in clientes %}
+                <option value="{{ c.id }}">{{ c.nombre }}</option>
+                {% endfor %}
+            </select>
+
+            <label>Método de pago</label>
+            <select name="metodo_pago">
+                <option value="efectivo">Efectivo</option>
+                <option value="tarjeta">Tarjeta</option>
+                <option value="transferencia">Transferencia</option>
+            </select>
+
+            <label>
+                <input type="checkbox" name="es_fiado" style="width:auto; display:inline-block">
+                Marcar como fiado (crédito, sin pago inmediato)
+            </label>
+
+            <h3>Comidas</h3>
+            <div id="lineas-container"></div>
+            <button type="button" class="btn btn-secundario" onclick="agregarLinea()">+ Agregar comida</button>
+
+            <p><b>Total estimado: $<span id="total-estimado">0.00</span></b></p>
+
+            <br>
+            <button class="btn" type="submit">Generar factura</button>
+        </form>
+    </div>
+
+    <script>
+        const comidas = [
+            {% for c in comidas %}
+            { id: {{ c.id }}, nombre: "{{ c.nombre|e }}", precio: {{ c.precio_actual }} },
+            {% endfor %}
+        ];
+
+        function agregarLinea() {
+            const container = document.getElementById('lineas-container');
+            const div = document.createElement('div');
+            div.className = 'fila-item';
+
+            const select = document.createElement('select');
+            select.name = 'comida_id';
+            select.innerHTML = comidas.map(c => `<option value="${c.id}" data-precio="${c.precio}">${c.nombre} - $${c.precio}</option>`).join('');
+            select.onchange = calcularTotal;
+
+            const cantidad = document.createElement('input');
+            cantidad.type = 'number';
+            cantidad.name = 'cantidad';
+            cantidad.value = 1;
+            cantidad.min = 1;
+            cantidad.oninput = calcularTotal;
+
+            const btnQuitar = document.createElement('button');
+            btnQuitar.type = 'button';
+            btnQuitar.className = 'btn btn-peligro';
+            btnQuitar.textContent = 'Quitar';
+            btnQuitar.onclick = () => { div.remove(); calcularTotal(); };
+
+            div.appendChild(select);
+            div.appendChild(cantidad);
+            div.appendChild(btnQuitar);
+            container.appendChild(div);
+            calcularTotal();
+        }
+
+        function calcularTotal() {
+            let total = 0;
+            document.querySelectorAll('#lineas-container .fila-item').forEach(fila => {
+                const select = fila.querySelector('select');
+                const cantidad = fila.querySelector('input[name="cantidad"]');
+                const precio = parseFloat(select.selectedOptions[0]?.dataset.precio || 0);
+                total += precio * (parseInt(cantidad.value) || 0);
+            });
+            document.getElementById('total-estimado').textContent = total.toFixed(2);
+        }
+
+        // Al cargar, agrega una línea inicial si hay comidas disponibles
+        if (comidas.length > 0) agregarLinea();
+    </script>
+{% endblock %}

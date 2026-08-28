@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Inicio{% endblock %}
+{% block content %}
+    <h1>Panel principal</h1>
+
+    <div class="card">
+        <h2>Clientes con saldo pendiente</h2>
+        {% if clientes_con_deuda %}
+            <table>
+                <tr><th>Cliente</th><th>Debe</th><th></th></tr>
+                {% for c in clientes_con_deuda %}
+                <tr>
+                    <td>{{ c.nombre }}</td>
+                    <td class="saldo-negativo">${{ "%.2f"|format(c.saldo_pendiente) }}</td>
+                    <td><a href="{{ url_for('ver_cliente', cliente_id=c.id) }}">Ver</a></td>
+                </tr>
+                {% endfor %}
+            </table>
+        {% else %}
+            <p>No hay clientes con cuentas pendientes 🎉</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>Últimas facturas</h2>
+        {% if ultimas_facturas %}
+            <table>
+                <tr><th>#</th><th>Cliente</th><th>Total</th><th>Estado</th><th></th></tr>
+                {% for f in ultimas_facturas %}
+                <tr>
+                    <td>{{ f.id }}</td>
+                    <td>{{ f.cliente.nombre }}</td>
+                    <td>${{ "%.2f"|format(f.total) }}</td>
+                    <td><span class="badge badge-{{ f.estado }}">{{ f.estado }}</span></td>
+                    <td><a href="{{ url_for('ver_factura', factura_id=f.id) }}">Ver</a></td>
+                </tr>
+                {% endfor %}
+            </table>
+        {% else %}
+            <p>Aún no hay facturas registradas.</p>
+        {% endif %}
+    </div>
+
+    <a class="btn" href="{{ url_for('nueva_factura') }}">+ Nueva venta</a>
+{% endblock %}

@@ -1,0 +1,151 @@
+:root {
+    --primario: #2c3e50;
+    --acento: #e67e22;
+    --exito: #27ae60;
+    --peligro: #c0392b;
+    --fondo: #f7f6f3;
+    --texto: #2c2c2c;
+    --borde: #e0ddd6;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--fondo);
+    color: var(--texto);
+    margin: 0;
+}
+
+.navbar {
+    background: var(--primario);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.navbar a {
+    color: #f0f0f0;
+    text-decoration: none;
+    font-size: 15px;
+}
+
+.navbar a:hover { color: var(--acento); }
+
+.navbar .brand {
+    font-weight: 700;
+    font-size: 18px;
+    margin-right: auto;
+    color: #fff;
+}
+
+.container {
+    max-width: 960px;
+    margin: 32px auto;
+    padding: 0 20px;
+}
+
+h1, h2, h3 { color: var(--primario); }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+th, td {
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--borde);
+}
+
+th {
+    background: var(--primario);
+    color: #fff;
+    font-weight: 600;
+}
+
+tr:last-child td { border-bottom: none; }
+
+.card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.btn {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    background: var(--acento);
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.btn:hover { opacity: 0.9; }
+
+.btn-secundario {
+    background: var(--primario);
+}
+
+.btn-peligro {
+    background: var(--peligro);
+}
+
+.badge {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.badge-pagada { background: var(--exito); }
+.badge-fiado { background: var(--peligro); }
+.badge-abonada { background: var(--acento); }
+
+form label {
+    display: block;
+    margin-top: 12px;
+    margin-bottom: 4px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+form input, form select, form textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--borde);
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.alert {
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+.alert-success { background: #d4edda; color: #155724; }
+.alert-danger { background: #f8d7da; color: #721c24; }
+
+.fila-item {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--borde);
+}
+
+.saldo-negativo { color: var(--peligro); font-weight: 700; }

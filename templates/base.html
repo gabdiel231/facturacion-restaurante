@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Facturación Restaurante{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="{{ url_for('index') }}" class="brand">🍽️ Restaurante</a>
+        <a href="{{ url_for('listar_clientes') }}">Clientes</a>
+        <a href="{{ url_for('listar_menu') }}">Menú</a>
+        <a href="{{ url_for('nueva_factura') }}">Nueva Venta</a>
+        <a href="{{ url_for('listar_fiados') }}">Fiados</a>
+        <a href="{{ url_for('ver_reportes') }}">Reportes</a>
+        <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+    </nav>
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

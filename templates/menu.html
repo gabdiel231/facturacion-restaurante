@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Menú{% endblock %}
+{% block content %}
+    <h1>Menú del restaurante</h1>
+    <a class="btn" href="{{ url_for('nueva_comida') }}">+ Agregar plato</a>
+    <br><br>
+    <table>
+        <tr><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Disponible</th><th></th></tr>
+        {% for c in comidas %}
+        <tr>
+            <td>{{ c.nombre }}</td>
+            <td>{{ c.categoria or '-' }}</td>
+            <td>${{ "%.2f"|format(c.precio_actual) }}</td>
+            <td>{{ 'Sí' if c.disponible else 'No' }}</td>
+            <td><a href="{{ url_for('editar_comida', comida_id=c.id) }}">Editar</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5">No hay platos registrados aún.</td></tr>
+        {% endfor %}
+    </table>
+{% endblock %}

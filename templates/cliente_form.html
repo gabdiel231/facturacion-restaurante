@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Nuevo cliente{% endblock %}
+{% block content %}
+    <h1>Nuevo cliente</h1>
+    <div class="card">
+        <form method="post">
+            <label>Nombre *</label>
+            <input type="text" name="nombre" required>
+
+            <label>Teléfono (para WhatsApp, incluir código de país)</label>
+            <input type="text" name="telefono" placeholder="Ej: 50761234567">
+
+            <label>Email (para enviar factura por correo)</label>
+            <input type="email" name="email">
+
+            <label>Dirección</label>
+            <input type="text" name="direccion">
+
+            <br><br>
+            <button class="btn" type="submit">Guardar cliente</button>
+        </form>
+    </div>
+{% endblock %}

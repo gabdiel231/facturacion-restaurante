@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar' if comida else 'Nuevo' }} plato{% endblock %}
+{% block content %}
+    <h1>{{ 'Editar plato' if comida else 'Nuevo plato' }}</h1>
+    <div class="card">
+        <form method="post">
+            <label>Nombre *</label>
+            <input type="text" name="nombre" required value="{{ comida.nombre if comida else '' }}">
+
+            <label>Descripción</label>
+            <input type="text" name="descripcion" value="{{ comida.descripcion if comida else '' }}">
+
+            <label>Categoría</label>
+            <input type="text" name="categoria" placeholder="Ej: plato_fuerte, bebida, postre"
+                   value="{{ comida.categoria if comida else '' }}">
+
+            <label>Precio *</label>
+            <input type="number" step="0.01" name="precio_actual" required
+                   value="{{ comida.precio_actual if comida else '' }}">
+
+            <label>
+                <input type="checkbox" name="disponible" style="width:auto; display:inline-block"
+                       {% if not comida or comida.disponible %}checked{% endif %}>
+                Disponible en el menú
+            </label>
+
+            <br><br>
+            <button class="btn" type="submit">Guardar</button>
+        </form>
+    </div>
+{% endblock %}

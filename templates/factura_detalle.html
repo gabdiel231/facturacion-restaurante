@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Factura #{{ factura.id }}{% endblock %}
+{% block content %}
+    <h1>Factura #{{ factura.id }}</h1>
+
+    <div class="card">
+        <p><b>Cliente:</b> <a href="{{ url_for('ver_cliente', cliente_id=factura.cliente.id) }}">{{ factura.cliente.nombre }}</a></p>
+        <p><b>Fecha:</b> {{ factura.fecha.strftime('%d/%m/%Y %H:%M') }}</p>
+        <p><b>Estado:</b> <span class="badge badge-{{ factura.estado }}">{{ factura.estado }}</span></p>
+        <p><b>Método de pago:</b> {{ factura.metodo_pago or '-' }}</p>
+    </div>
+
+    <h2>Detalle</h2>
+    <table>
+        <tr><th>Comida</th><th>Cantidad</th><th>Precio unit.</th><th>Subtotal</th></tr>
+        {% for d in factura.detalles %}
+        <tr>
+            <td>{{ d.comida.nombre }}</td>
+            <td>{{ d.cantidad }}</td>
+            <td>${{ "%.2f"|format(d.precio_unitario) }}</td>
+            <td>${{ "%.2f"|format(d.subtotal) }}</td>
+        </tr>
+        {% endfor %}
+        <tr><td colspan="3"><b>Total</b></td><td><b>${{ "%.2f"|format(factura.total) }}</b></td></tr>
+    </table>
+
+    {% if factura.estado in ['fiado', 'abonada'] %}
+    <div class="card">
+        <h2>Control de fiado</h2>
+        <p><b>Total abonado:</b> ${{ "%.2f"|format(factura.total_abonado) }}</p>
+        <p><b>Saldo pendiente:</b> <span class="saldo-negativo">${{ "%.2f"|format(factura.saldo) }}</span></p>
+
+        <h3>Historial de abonos</h3>
+        {% if factura.abonos %}
+        <table>
+            <tr><th>Fecha</th><th>Monto</th><th>Método</th></tr>
+            {% for a in factura.abonos %}
+            <tr>
+                <td>{{ a.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
+                <td>${{ "%.2f"|format(a.monto) }}</td>
+                <td>{{ a.metodo_pago or '-' }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <p>Aún no se han registrado abonos.</p>
+        {% endif %}
+
+        <h3>Registrar nuevo abono</h3>
+        <form method="post" action="{{ url_for('abonar_factura', factura_id=factura.id) }}">
+            <label>Monto</label>
+            <input type="number" step="0.01" name="monto" max="{{ factura.saldo }}" required>
+
+            <label>Método de pago</label>
+            <select name="metodo_pago">
+                <option value="efectivo">Efectivo</option>
+                <option value="tarjeta">Tarjeta</option>
+                <option value="transferencia">Transferencia</option>
+            </select>
+            <br><br>
+            <button class="btn" type="submit">Registrar abono</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <h2>Enviar factura</h2>
+        <form method="post" action="{{ url_for('enviar_correo', factura_id=factura.id) }}" style="display:inline">
+            <button class="btn" type="submit" {{ 'disabled' if not factura.cliente.email }}>📧 Enviar por correo</button>
+        </form>
+        <a class="btn btn-secundario" href="{{ url_for('enviar_whatsapp', factura_id=factura.id) }}"
+           target="_blank" {{ 'style=pointer-events:none;opacity:0.5' if not factura.cliente.telefono }}>
+            📱 Enviar por WhatsApp
+        </a>
+    </div>
+{% endblock %}
