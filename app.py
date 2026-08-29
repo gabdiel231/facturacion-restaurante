@@ -121,6 +121,25 @@ def ver_cliente(cliente_id):
     return render_template("cliente_detalle.html", cliente=cliente)
 
 
+@app.route("/clientes/<int:cliente_id>/eliminar", methods=["POST"])
+@login_requerido
+def eliminar_cliente(cliente_id):
+    cliente = Cliente.query.get_or_404(cliente_id)
+    if cliente.facturas:
+        flash(
+            f"No se puede eliminar a '{cliente.nombre}' porque ya tiene facturas "
+            "registradas (eso protege tu historial de ventas).",
+            "danger",
+        )
+        return redirect(url_for("ver_cliente", cliente_id=cliente.id))
+
+    nombre = cliente.nombre
+    db.session.delete(cliente)
+    db.session.commit()
+    flash(f"Cliente '{nombre}' eliminado.", "success")
+    return redirect(url_for("listar_clientes"))
+
+
 # ---------------------------------------------------------------------------
 # Menú: Comidas y precios
 # ---------------------------------------------------------------------------
@@ -163,6 +182,32 @@ def editar_comida(comida_id):
         flash("Precio/comida actualizado.", "success")
         return redirect(url_for("listar_menu"))
     return render_template("comida_form.html", comida=comida)
+
+
+@app.route("/menu/<int:comida_id>/eliminar", methods=["POST"])
+@login_requerido
+def eliminar_comida(comida_id):
+    comida = Comida.query.get_or_404(comida_id)
+    ya_vendido = DetalleFactura.query.filter_by(comida_id=comida.id).first()
+
+    if ya_vendido:
+        # No se borra para no romper el historial de facturas antiguas;
+        # simplemente se oculta del menú activo.
+        comida.disponible = False
+        db.session.commit()
+        flash(
+            f"'{comida.nombre}' ya aparece en facturas anteriores, así que no se "
+            "puede eliminar por completo (protege tu historial). Se marcó como "
+            "'no disponible' para que ya no aparezca en nuevas ventas.",
+            "success",
+        )
+        return redirect(url_for("listar_menu"))
+
+    nombre = comida.nombre
+    db.session.delete(comida)
+    db.session.commit()
+    flash(f"'{nombre}' eliminado del menú.", "success")
+    return redirect(url_for("listar_menu"))
 
 
 # ---------------------------------------------------------------------------

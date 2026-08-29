@@ -14,6 +14,10 @@
                 $0.00
             {% endif %}
         </p>
+        <form method="post" action="{{ url_for('eliminar_cliente', cliente_id=cliente.id) }}"
+              onsubmit="return confirm('¿Seguro que quieres eliminar a {{ cliente.nombre }}? Esta acción no se puede deshacer.');">
+            <button class="btn btn-peligro" type="submit">Eliminar cliente</button>
+        </form>
     </div>
 
     <h2>Historial de facturas</h2>

@@ -5,7 +5,7 @@
     <a class="btn" href="{{ url_for('nuevo_cliente') }}">+ Nuevo cliente</a>
     <br><br>
     <table>
-        <tr><th>Nombre</th><th>Teléfono</th><th>Email</th><th>Saldo pendiente</th><th></th></tr>
+        <tr><th>Nombre</th><th>Teléfono</th><th>Email</th><th>Saldo pendiente</th><th></th><th></th></tr>
         {% for c in clientes %}
         <tr>
             <td>{{ c.nombre }}</td>
@@ -19,9 +19,15 @@
                 {% endif %}
             </td>
             <td><a href="{{ url_for('ver_cliente', cliente_id=c.id) }}">Ver</a></td>
+            <td>
+                <form method="post" action="{{ url_for('eliminar_cliente', cliente_id=c.id) }}"
+                      onsubmit="return confirm('¿Seguro que quieres eliminar a {{ c.nombre }}?');" style="display:inline">
+                    <button class="btn btn-peligro" type="submit" style="padding:4px 10px; font-size:12px;">Eliminar</button>
+                </form>
+            </td>
         </tr>
         {% else %}
-        <tr><td colspan="5">No hay clientes registrados.</td></tr>
+        <tr><td colspan="6">No hay clientes registrados.</td></tr>
         {% endfor %}
     </table>
 {% endblock %}
