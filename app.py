@@ -326,7 +326,12 @@ def enviar_correo(factura_id):
         flash("Este cliente no tiene correo registrado.", "danger")
         return redirect(url_for("ver_factura", factura_id=factura_id))
 
-    pdf_path = generar_pdf_factura(factura)
+    try:
+        pdf_path = generar_pdf_factura(factura)
+    except Exception as e:
+        flash(f"No se pudo generar el PDF de la factura: {e}", "danger")
+        return redirect(url_for("ver_factura", factura_id=factura_id))
+
     ok, mensaje = enviar_factura_por_correo(factura, pdf_path)
     flash(mensaje, "success" if ok else "danger")
     return redirect(url_for("ver_factura", factura_id=factura_id))

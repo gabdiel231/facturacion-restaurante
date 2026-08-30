@@ -49,19 +49,26 @@ def enviar_factura_por_correo(factura, pdf_path):
 
     msg.set_content(cuerpo)
 
-    with open(pdf_path, "rb") as f:
-        msg.add_attachment(
-            f.read(),
-            maintype="application",
-            subtype="pdf",
-            filename=f"factura_{factura.id}.pdf",
-        )
-
     try:
+        with open(pdf_path, "rb") as f:
+            msg.add_attachment(
+                f.read(),
+                maintype="application",
+                subtype="pdf",
+                filename=f"factura_{factura.id}.pdf",
+            )
+
         with smtplib.SMTP(host, port) as server:
             server.starttls()
             server.login(user, password)
             server.send_message(msg)
         return True, f"Factura enviada por correo a {factura.cliente.email}."
+    except FileNotFoundError:
+        return False, "No se pudo generar el PDF de la factura para adjuntarlo."
+    except smtplib.SMTPAuthenticationError:
+        return False, (
+            "Gmail rechazó las credenciales. Verifica que EMAIL_PASSWORD sea una "
+            "'contraseña de aplicación' (no tu contraseña normal de Gmail)."
+        )
     except Exception as e:
         return False, f"Error al enviar el correo: {e}"
