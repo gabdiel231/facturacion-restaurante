@@ -58,7 +58,11 @@ def enviar_factura_por_correo(factura, pdf_path):
                 filename=f"factura_{factura.id}.pdf",
             )
 
-        with smtplib.SMTP(host, port) as server:
+        # timeout=10: si no logra conectar en 10 segundos, falla rápido con un
+        # mensaje claro en vez de dejar la petición "colgada" hasta que el
+        # servidor mate el proceso por WORKER TIMEOUT (lo que produce un
+        # error 500 sin ningún mensaje útil para el usuario).
+        with smtplib.SMTP(host, port, timeout=10) as server:
             server.starttls()
             server.login(user, password)
             server.send_message(msg)
@@ -69,6 +73,14 @@ def enviar_factura_por_correo(factura, pdf_path):
         return False, (
             "Gmail rechazó las credenciales. Verifica que EMAIL_PASSWORD sea una "
             "'contraseña de aplicación' (no tu contraseña normal de Gmail)."
+        )
+    except (TimeoutError, OSError):
+        return False, (
+            "No se pudo conectar al servidor de correo (tardó demasiado en "
+            "responder). Es posible que el hosting esté bloqueando el puerto "
+            "587 de salida. Contacta soporte de Render para confirmarlo, o "
+            "considera usar un servicio de correo transaccional (como "
+            "SendGrid o Resend) que funcione por HTTPS en vez de SMTP directo."
         )
     except Exception as e:
         return False, f"Error al enviar el correo: {e}"
