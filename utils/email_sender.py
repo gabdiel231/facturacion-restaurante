@@ -1,43 +1,64 @@
 """
-Envío de facturas por correo electrónico usando SMTP.
+Envío de facturas por correo electrónico usando Resend (https://resend.com).
 
-Configura tus credenciales como variables de entorno (NUNCA las escribas
-directamente en el código):
+Se cambió de SMTP directo a la API HTTPS de Resend porque muchos hostings
+gratuitos (incluido el plan Free de Render) bloquean las conexiones
+salientes por el puerto 587 (SMTP), lo que hacía que el envío se quedara
+"colgado" hasta que el servidor mataba el proceso. La API de Resend
+funciona por HTTPS (puerto 443), que sí está permitido en todas partes.
 
-    export EMAIL_HOST=smtp.gmail.com
-    export EMAIL_PORT=587
-    export EMAIL_USER=tu_correo@gmail.com
-    export EMAIL_PASSWORD=tu_contraseña_de_aplicacion
+Configuración necesaria (variables de entorno):
 
-Nota: si usas Gmail, necesitas generar una "contraseña de aplicación"
-(no tu contraseña normal) desde la configuración de seguridad de tu cuenta.
+    RESEND_API_KEY   -> la API key que Resend te da al crear una cuenta
+    EMAIL_FROM       -> (opcional) remitente a mostrar, ej:
+                         "Restaurante <facturas@tudominio.com>"
+                         Si no la defines, se usa el remitente de pruebas
+                         de Resend (onboarding@resend.dev).
+
+Cómo obtener tu API key:
+    1. Crea una cuenta gratis en https://resend.com
+    2. Ve a "API Keys" -> "Create API Key"
+    3. Copia la key (empieza con "re_") y guárdala como RESEND_API_KEY
+
+Nota importante sobre el remitente de pruebas:
+    Mientras NO verifiques un dominio propio en Resend, solo podrás enviar
+    correos a la dirección de email con la que te registraste en Resend
+    (es una restricción de "modo sandbox" para evitar spam). Para poder
+    enviarle facturas a CUALQUIER cliente real, necesitas verificar un
+    dominio propio en Resend (Domains -> Add Domain) y usar ese dominio
+    en EMAIL_FROM. Si el restaurante no tiene dominio propio, se puede
+    comprar uno barato (ej. en Namecheap) solo para este propósito.
 """
 
 import os
-import smtplib
-from email.message import EmailMessage
+import base64
+import requests
+
+RESEND_API_URL = "https://api.resend.com/emails"
 
 
 def enviar_factura_por_correo(factura, pdf_path):
     """
-    Envía la factura (PDF adjunto) al correo del cliente.
+    Envía la factura (PDF adjunto) al correo del cliente vía Resend.
     Retorna (ok: bool, mensaje: str)
     """
-    host = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
-    port = int(os.environ.get("EMAIL_PORT", 587))
-    user = os.environ.get("EMAIL_USER")
-    password = os.environ.get("EMAIL_PASSWORD")
-
-    if not user or not password:
+    api_key = os.environ.get("RESEND_API_KEY")
+    if not api_key:
         return False, (
-            "Faltan las credenciales de correo. Configura las variables de entorno "
-            "EMAIL_USER y EMAIL_PASSWORD antes de enviar."
+            "Falta configurar RESEND_API_KEY. Crea una cuenta gratis en "
+            "resend.com, genera una API key, y agrégala como variable de "
+            "entorno antes de enviar."
         )
 
-    msg = EmailMessage()
-    msg["Subject"] = f"Factura #{factura.id} - Restaurante"
-    msg["From"] = user
-    msg["To"] = factura.cliente.email
+    remitente = os.environ.get("EMAIL_FROM", "Restaurante <onboarding@resend.dev>")
+
+    try:
+        with open(pdf_path, "rb") as f:
+            pdf_bytes = f.read()
+    except FileNotFoundError:
+        return False, "No se pudo generar el PDF de la factura para adjuntarlo."
+    except Exception as e:
+        return False, f"Error al leer el PDF generado: {e}"
 
     cuerpo = (
         f"Hola {factura.cliente.nombre},\n\n"
@@ -47,40 +68,42 @@ def enviar_factura_por_correo(factura, pdf_path):
         cuerpo += f"Saldo pendiente: ${factura.saldo}\n"
     cuerpo += "\n¡Gracias por tu preferencia!"
 
-    msg.set_content(cuerpo)
+    payload = {
+        "from": remitente,
+        "to": [factura.cliente.email],
+        "subject": f"Factura #{factura.id} - Restaurante",
+        "text": cuerpo,
+        "attachments": [
+            {
+                "filename": f"factura_{factura.id}.pdf",
+                "content": base64.b64encode(pdf_bytes).decode("utf-8"),
+            }
+        ],
+    }
 
     try:
-        with open(pdf_path, "rb") as f:
-            msg.add_attachment(
-                f.read(),
-                maintype="application",
-                subtype="pdf",
-                filename=f"factura_{factura.id}.pdf",
-            )
+        # timeout=10: falla rápido con un mensaje claro en vez de colgar la
+        # petición hasta que el servidor mate el proceso.
+        response = requests.post(
+            RESEND_API_URL,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json=payload,
+            timeout=10,
+        )
+    except requests.exceptions.Timeout:
+        return False, "Resend tardó demasiado en responder. Intenta de nuevo."
+    except requests.exceptions.RequestException as e:
+        return False, f"Error al conectar con Resend: {e}"
 
-        # timeout=10: si no logra conectar en 10 segundos, falla rápido con un
-        # mensaje claro en vez de dejar la petición "colgada" hasta que el
-        # servidor mate el proceso por WORKER TIMEOUT (lo que produce un
-        # error 500 sin ningún mensaje útil para el usuario).
-        with smtplib.SMTP(host, port, timeout=10) as server:
-            server.starttls()
-            server.login(user, password)
-            server.send_message(msg)
+    if response.status_code in (200, 201):
         return True, f"Factura enviada por correo a {factura.cliente.email}."
-    except FileNotFoundError:
-        return False, "No se pudo generar el PDF de la factura para adjuntarlo."
-    except smtplib.SMTPAuthenticationError:
-        return False, (
-            "Gmail rechazó las credenciales. Verifica que EMAIL_PASSWORD sea una "
-            "'contraseña de aplicación' (no tu contraseña normal de Gmail)."
-        )
-    except (TimeoutError, OSError):
-        return False, (
-            "No se pudo conectar al servidor de correo (tardó demasiado en "
-            "responder). Es posible que el hosting esté bloqueando el puerto "
-            "587 de salida. Contacta soporte de Render para confirmarlo, o "
-            "considera usar un servicio de correo transaccional (como "
-            "SendGrid o Resend) que funcione por HTTPS en vez de SMTP directo."
-        )
-    except Exception as e:
-        return False, f"Error al enviar el correo: {e}"
+
+    # Resend devuelve el motivo del rechazo en JSON, ej. dominio no verificado
+    try:
+        detalle = response.json().get("message", response.text)
+    except ValueError:
+        detalle = response.text
+    return False, f"Resend rechazó el envío ({response.status_code}): {detalle}"

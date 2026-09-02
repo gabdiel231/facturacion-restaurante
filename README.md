@@ -113,18 +113,32 @@ una `DATABASE_URL` (PostgreSQL en la nube) y si no, usa SQLite localmente.
 
 ## Configurar el envío de correo (opcional)
 
-Para que el botón "Enviar por correo" funcione, define estas variables de
-entorno antes de correr `python app.py`:
+El envío de correo usa **Resend** (https://resend.com) en vez de SMTP
+directo, porque hostings gratuitos como Render bloquean el puerto 587
+(SMTP) para evitar spam — Resend funciona por HTTPS, que sí está permitido.
 
 ```bash
-export EMAIL_HOST=smtp.gmail.com
-export EMAIL_PORT=587
-export EMAIL_USER=tu_correo@gmail.com
-export EMAIL_PASSWORD=tu_contraseña_de_aplicacion
+export RESEND_API_KEY=re_tu_api_key
+export EMAIL_FROM="Restaurante <onboarding@resend.dev>"
 ```
 
-Si usas Gmail, necesitas crear una "contraseña de aplicación" desde la
-configuración de seguridad de tu cuenta de Google (no tu contraseña normal).
+Pasos:
+1. Crea una cuenta gratis en https://resend.com (3,000 correos/mes gratis).
+2. Ve a "API Keys" → "Create API Key" → copia la key (empieza con `re_`).
+3. Agrega `RESEND_API_KEY` como variable de entorno (en Render: pestaña
+   "Environment" de tu Web Service).
+
+**Importante — restricción de "modo sandbox":** mientras no verifiques un
+dominio propio en Resend, solo podrás enviar correos a la dirección con la
+que te registraste en Resend (sirve para probar, no para producción real).
+Para enviarle facturas a **cualquier cliente**, necesitas:
+1. Tener un dominio propio (ej. `turestaurante.com`).
+2. En Resend: "Domains" → "Add Domain" → seguir las instrucciones para
+   agregar los registros DNS que te piden.
+3. Una vez verificado, usa `EMAIL_FROM="Restaurante <facturas@turestaurante.com>"`.
+
+Si el restaurante no tiene dominio propio, se puede comprar uno barato
+(Namecheap, GoDaddy, etc.) solo para este propósito.
 
 ## WhatsApp
 
